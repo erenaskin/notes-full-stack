@@ -1,0 +1,91 @@
+# 1. BÖLÜM: Genel Bilgiler
+# İş akışımıza bir isim veriyoruz. Bu isim GitHub'ın "Actions" sekmesinde görünecek.
+name: Notes App CI/CD Pipeline
+
+# 2. BÖLÜM: Tetikleyici (Trigger)
+# Bu otomasyonun NE ZAMAN başlayacağını söylüyoruz.
+on:
+  # "main" isimli branch'e her kod gönderildiğinde (push) bu otomasyonu başlat.
+  push:
+    branches: [ "main" ]
+
+# 3. BÖLÜM: İşler (Jobs)
+# Otomasyon başladığında YAPILACAK GÖREVLER listesi.
+# Bu işler paralel olarak (aynı anda) başlayabilir.
+jobs:
+  # --- İŞ 1: Backend Kodunu Test Et ---
+  test-backend:
+    # Bu işin hangi sanal makinede çalışacağını belirtiyoruz. Ubuntu'nun son sürümü.
+    runs-on: ubuntu-latest
+    # Bu işin adımları (sırayla çalışır)
+    steps:
+      # Adım 1.1: Kodumuzu GitHub'dan sanal makineye indiriyoruz.
+      - name: Kodu Sanal Makineye İndir
+        uses: actions/checkout@v3
+
+      # Adım 1.2: Sanal makineye Java 17 kuruyoruz.
+      - name: Java 17 Kurulumu
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # Adım 1.3: Maven ile test komutunu çalıştırıyoruz.
+      # Eğer bu komut bir hata verirse (test başarısız olursa), tüm otomasyon durur.
+      - name: Maven ile Testleri Çalıştır
+        run: ./mvnw -f backend/pom.xml test
+
+  # --- İŞ 2: Frontend Kodunu Test Et ---
+  test-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      # Adım 2.1: Kodu indir.
+      - name: Kodu Sanal Makineye İndir
+        uses: actions/checkout@v3
+
+      # Adım 2.2: Sanal makineye Flutter SDK'sını kur.
+      - name: Flutter SDK Kurulumu
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      # Adım 2.3: Flutter testlerini çalıştır.
+      # Önce 'frontend' klasörüne gir, sonra bağımlılıkları yükle ve testleri çalıştır.
+      - name: Flutter Analiz ve Testleri Çalıştır
+        run: |
+          cd frontend
+          flutter pub get
+          flutter analyze
+          flutter test
+
+  # --- İŞ 3: Docker İmajı Oluştur ve Yayınla ---
+  build-and-push-docker:
+    # Bu işin başlaması için bir şart koşuyoruz:
+    # Sadece 'test-backend' VE 'test-frontend' işleri başarıyla biterse başla.
+    needs: [test-backend, test-frontend]
+    runs-on: ubuntu-latest
+    steps:
+      # Adım 3.1: Kodu indir.
+      - name: Kodu Sanal Makineye İndir
+        uses: actions/checkout@v3
+
+      # Adım 3.2: Docker Hub hesabına giriş yap.
+      # Kullanıcı adı ve şifreyi doğrudan buraya yazmıyoruz. GÜVENLİK!
+      # Bunun yerine GitHub'ın gizli kasasını (Secrets) kullanıyoruz.
+      - name: Docker Hub'a Giriş Yap
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Adım 3.3: Docker imajını oluştur ve Docker Hub'a gönder.
+      - name: Docker İmajını Oluştur ve Docker Hub'a Gönder
+        uses: docker/build-push-action@v4
+        with:
+          # Dockerfile'ın hangi klasörde olduğunu belirtiyoruz.
+          context: ./backend
+          # 'true' demek, oluşturduktan sonra Docker Hub'a gönder demek.
+          push: true
+          # İmajımıza bir isim (etiket) veriyoruz.
+          # 'erenaskin' kısmını KENDİ DOCKER HUB KULLANICI ADINIZLA DEĞİŞTİRİN!
+          tags: erenaskin/notlarim-api:latest
