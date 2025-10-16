@@ -1,22 +1,29 @@
 # 1. BÖLÜM: Genel Bilgiler
-# İş akışımıza bir isim veriyoruz. Bu isim GitHub'ın "Actions" sekmesinde görünecek.
 name: Notes App CI/CD Pipeline
 
 # 2. BÖLÜM: Tetikleyici (Trigger)
-# Bu otomasyonun NE ZAMAN başlayacağını söylüyoruz.
 on:
-  # "main" isimli branch'e her kod gönderildiğinde (push) bu otomasyonu başlat.
   push:
     branches: [ "main" ]
 
 # 3. BÖLÜM: İşler (Jobs)
-# Otomasyon başladığında YAPILACAK GÖREVLER listesi.
-# Bu işler paralel olarak (aynı anda) başlayabilir.
 jobs:
-  # --- İŞ 1: Backend Kodunu Test Et ---
   test-backend:
-    # Bu işin hangi sanal makinede çalışacağını belirtiyoruz. Ubuntu'nun son sürümü.
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: erenaskin
+          POSTGRES_PASSWORD: Ea030903*
+          POSTGRES_DB: notes_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     # Bu işin adımları (sırayla çalışır)
     steps:
       # Adım 1.1: Kodumuzu GitHub'dan sanal makineye indiriyoruz.
@@ -31,7 +38,6 @@ jobs:
           distribution: 'temurin'
 
       # Adım 1.3: Maven ile test komutunu çalıştırıyoruz.
-      # Eğer bu komut bir hata verirse (test başarısız olursa), tüm otomasyon durur.
       - name: Maven ile Testleri Çalıştır
         run: ./api/mvnw -f api/pom.xml test
 
@@ -50,7 +56,6 @@ jobs:
           channel: 'stable'
 
       # Adım 2.3: Flutter testlerini çalıştır.
-      # Önce 'frontend' klasörüne gir, sonra bağımlılıkları yükle ve testleri çalıştır.
       - name: Flutter Analiz ve Testleri Çalıştır
         run: |
           cd notes
@@ -60,8 +65,6 @@ jobs:
 
   # --- İŞ 3: Docker İmajı Oluştur ve Yayınla ---
   build-and-push-docker:
-    # Bu işin başlaması için bir şart koşuyoruz:
-    # Sadece 'test-backend' VE 'test-frontend' işleri başarıyla biterse başla.
     needs: [test-backend, test-frontend]
     runs-on: ubuntu-latest
     steps:
@@ -75,8 +78,8 @@ jobs:
       - name: Docker Hub'a Giriş Yap
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: erenaskin
+          password: Ea030903*
 
       # Adım 3.3: Docker imajını oluştur ve Docker Hub'a gönder.
       - name: Docker İmajını Oluştur ve Docker Hub'a Gönder
