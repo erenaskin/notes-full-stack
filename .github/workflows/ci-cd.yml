@@ -33,7 +33,7 @@ jobs:
       # Adım 1.3: Maven ile test komutunu çalıştırıyoruz.
       # Eğer bu komut bir hata verirse (test başarısız olursa), tüm otomasyon durur.
       - name: Maven ile Testleri Çalıştır
-        run: ./backend/mvnw -f api/pom.xml test
+        run: ./api/mvnw -f api/pom.xml test
 
   # --- İŞ 2: Frontend Kodunu Test Et ---
   test-frontend:
@@ -83,9 +83,9 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           # Dockerfile'ın hangi klasörde olduğunu belirtiyoruz.
-          context: ./backend
+          context: ./api
           # 'true' demek, oluşturduktan sonra Docker Hub'a gönder demek.
           push: true
           # İmajımıza bir isim (etiket) veriyoruz.
           # 'erenaskin' kısmını KENDİ DOCKER HUB KULLANICI ADINIZLA DEĞİŞTİRİN!
-          tags: erenaskin/notlarim-api:latest
+          tags: erenaskin/notes:latest
