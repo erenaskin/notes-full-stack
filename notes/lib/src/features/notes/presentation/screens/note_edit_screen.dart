@@ -22,23 +22,19 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen> {
   @override
   void initState() {
     super.initState();
-    // print('NoteEditScreen initState - isEditing: $_isEditing, noteId: ${widget.noteId}');
 
     if (_isEditing) {
-      // Fetch the note data if we are editing
-      ref.read(noteProvider(widget.noteId!).future).then((note) { // .future çağrısı yeri düzeltildi
-        // print('Fetched note data: ${note.title} - ${note.content}');
+      ref.read(noteProvider(widget.noteId!).future).then((note) {
         _titleController.text = note.title;
         _contentController.text = note.content;
         setState(() {}); 
       }).catchError((error, stackTrace) {
-        // print('Error fetching note: $error');
-        // Optionally show a SnackBar or navigate away on error
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error fetching note: ${error.toString()}')),
-          );
-        }
+        // Removed SnackBar call as errors are handled in the build method via noteAsyncValue
+        // if (mounted) {
+        //   ScaffoldMessenger.of(context).showSnackBar(
+        //     SnackBar(content: Text('Error fetching note: ${error.toString()}')),
+        //   );
+        // }
       });
     }
   }
@@ -53,7 +49,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen> {
   Future<void> _saveNote() async {
     if (_formKey.currentState!.validate()) {
       final notifier = ref.read(notesProvider.notifier);
-      final navigator = GoRouter.of(context);
+      final navigator = GoRouter.of(context); // Store navigator before async call
 
       final title = _titleController.text;
       final content = _contentController.text;
@@ -61,33 +57,30 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen> {
       try {
         if (_isEditing) {
           await notifier.updateNote(id: widget.noteId!, title: title, content: content);
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Note successfully updated!')),
-            );
-          }
+          if (!mounted) return; // Check mounted immediately after async operation
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Note successfully updated!')),
+          );
         } else {
           await notifier.addNote(title: title, content: content);
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Note successfully added!')),
-            );
-          }
+          if (!mounted) return; // Check mounted immediately after async operation
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Note successfully added!')),
+          );
         }
+        if (!mounted) return; // Check mounted before using context.pop()
         navigator.pop();
       } catch (e) {
-         if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to save note: ${e.toString()}')),
-          );
-         }
+         if (!mounted) return; // Check mounted immediately after async operation
+         ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save note: ${e.toString()}')),
+        );
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // If editing, watch the provider to handle loading/error states
     final noteAsyncValue = _isEditing ? ref.watch(noteProvider(widget.noteId!)) : null;
 
     return Scaffold(
@@ -113,7 +106,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen> {
         data: (note) => _buildForm(),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error: $err')),
-      ) ?? _buildForm(), // If not editing, just build the form
+      ) ?? _buildForm(),
       floatingActionButton: FloatingActionButton(
         onPressed: _saveNote,
         child: const Icon(Icons.save),
