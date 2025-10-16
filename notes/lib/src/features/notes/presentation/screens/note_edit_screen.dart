@@ -23,17 +23,17 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen> {
   @override
   void initState() {
     super.initState();
-    print('NoteEditScreen initState - isEditing: $_isEditing, noteId: ${widget.noteId}');
+    // print('NoteEditScreen initState - isEditing: $_isEditing, noteId: ${widget.noteId}');
 
     if (_isEditing) {
       // Fetch the note data if we are editing
       ref.read(noteProvider(widget.noteId!).future).then((note) { // .future çağrısı yeri düzeltildi
-        print('Fetched note data: ${note.title} - ${note.content}');
+        // print('Fetched note data: ${note.title} - ${note.content}');
         _titleController.text = note.title;
         _contentController.text = note.content;
         setState(() {}); 
       }).catchError((error, stackTrace) {
-        print('Error fetching note: $error');
+        // print('Error fetching note: $error');
         // Optionally show a SnackBar or navigate away on error
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -104,7 +104,8 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen> {
               icon: const Icon(Icons.delete),
               onPressed: () async {
                 await ref.read(notesProvider.notifier).deleteNote(widget.noteId!);
-                if (mounted) context.pop();
+                if (!mounted) return;
+                context.pop();
               },
             )
         ],
