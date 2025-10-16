@@ -33,7 +33,7 @@ jobs:
       # Adım 1.3: Maven ile test komutunu çalıştırıyoruz.
       # Eğer bu komut bir hata verirse (test başarısız olursa), tüm otomasyon durur.
       - name: Maven ile Testleri Çalıştır
-        run: ./mvnw -f backend/pom.xml test
+        run: ./backend/mvnw -f api/pom.xml test
 
   # --- İŞ 2: Frontend Kodunu Test Et ---
   test-frontend:
@@ -53,7 +53,7 @@ jobs:
       # Önce 'frontend' klasörüne gir, sonra bağımlılıkları yükle ve testleri çalıştır.
       - name: Flutter Analiz ve Testleri Çalıştır
         run: |
-          cd frontend
+          cd notes
           flutter pub get
           flutter analyze
           flutter test
