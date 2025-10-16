@@ -94,11 +94,12 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen> {
           if (_isEditing)
              IconButton(
               icon: const Icon(Icons.delete),
-              onPressed: () async {
-                await ref.read(notesProvider.notifier).deleteNote(widget.noteId!);
-                if (!mounted) return;
-                context.pop();
-              },
+               onPressed: () async {
+                 final navigator = GoRouter.of(context); // Capture before async
+                 await ref.read(notesProvider.notifier).deleteNote(widget.noteId!);
+                 if (!mounted) return;
+                 navigator.pop();
+               },
             )
         ],
       ),
