@@ -15,9 +15,9 @@ class DioClient {
             final token = await _secureStorageService.readToken();
             if (token != null) {
               options.headers['Authorization'] = 'Bearer $token';
-              print('Sending token for ${options.path}: $token');
+              // print('Sending token for ${options.path}: $token'); // Removed print statement
             } else {
-              print('No token found for request to ${options.path}');
+              // print('No token found for request to ${options.path}'); // Removed print statement
             }
             return handler.next(options);
           },

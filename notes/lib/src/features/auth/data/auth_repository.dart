@@ -17,7 +17,7 @@ class AuthRepository {
         },
       );
 
-      print('Login response data: ${response.data}'); // <-- Bu satır eklendi
+      // print('Login response data: ${response.data}'); // Removed print statement
 
       if (response.statusCode == 200 && response.data != null) {
         final token = response.data['token']; // Adjust based on your API response
