@@ -8,6 +8,7 @@ import com.notes.api.web.dto.CreateNoteRequest;
 import com.notes.api.web.dto.NoteDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,9 +21,14 @@ public class NoteServiceImpl implements NoteService {
     private final NoteRepository noteRepository;
     private final UserRepository userRepository;
 
+    private User getUserByDetails(UserDetails userDetails) {
+        return userRepository.findByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + userDetails.getUsername()));
+    }
+
     @Override
     public List<NoteDto> findAllForUser(UserDetails userDetails) {
-        User user = (User) userDetails;
+        User user = getUserByDetails(userDetails);
         return noteRepository.findByUserOrderByUpdatedAtDesc(user).stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
@@ -30,7 +36,7 @@ public class NoteServiceImpl implements NoteService {
 
     @Override
     public NoteDto findByIdForUser(Long id, UserDetails userDetails) {
-        User user = (User) userDetails;
+        User user = getUserByDetails(userDetails);
         Note note = noteRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Note not found with id: " + id));
         if (!note.getUser().getId().equals(user.getId())) {
@@ -41,7 +47,7 @@ public class NoteServiceImpl implements NoteService {
 
     @Override
     public NoteDto create(CreateNoteRequest request, UserDetails userDetails) {
-        User user = (User) userDetails;
+        User user = getUserByDetails(userDetails);
         Note note = Note.builder()
                 .title(request.getTitle())
                 .content(request.getContent())
@@ -52,7 +58,7 @@ public class NoteServiceImpl implements NoteService {
 
     @Override
     public NoteDto update(Long id, CreateNoteRequest request, UserDetails userDetails) {
-        User user = (User) userDetails;
+        User user = getUserByDetails(userDetails);
         Note note = noteRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Note not found with id: " + id));
         if (!note.getUser().getId().equals(user.getId())) {
@@ -65,7 +71,7 @@ public class NoteServiceImpl implements NoteService {
 
     @Override
     public void delete(Long id, UserDetails userDetails) {
-        User user = (User) userDetails;
+        User user = getUserByDetails(userDetails);
         Note note = noteRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Note not found with id: " + id));
         if (!note.getUser().getId().equals(user.getId())) {
