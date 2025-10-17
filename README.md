@@ -87,7 +87,7 @@ services:
     environment:
       POSTGRES_USER: your_postgres_user
       POSTGRES_PASSWORD: your_postgres_password
-      POSTGRES_DB: notes_db
+      POSTGRES_DB: your_db_name
     ports:
       - "5432:5432"
     volumes:
@@ -104,8 +104,8 @@ services:
       - "8080:8080"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres_db:5432/notes_db
-      - SPRING_DATASOURCE_USERNAME=your_spring_datasource_username
-      - SPRING_DATASOURCE_PASSWORD=your_spring_datasource_password
+      - SPRING_DATASOURCE_USERNAME=your_datasource_username
+      - SPRING_DATASOURCE_PASSWORD=your_datasource_password
 
 volumes:
   postgres_data:
@@ -145,6 +145,58 @@ This command will build the backend image using the `Dockerfile` in the `api` di
     ```bash
     flutter run
     ```
+
+---
+
+## 🧪 Testing Strategy
+
+This project adopts a layered testing strategy to ensure code quality, reliability, and maintainability. Our approach is based on the "Test Pyramid" model and includes the following three main types of tests.
+
+All tests are organized under the `src/test/java` directory, maintaining the same package structure as the classes they test.
+
+### 1. Unit Tests
+
+- **Purpose:** To verify the functionality of a single class or method in complete isolation from external dependencies (database, other services, etc.).
+- **Tools:** `JUnit 5`, `Mockito`, `AssertJ`.
+- **Characteristics:**
+    - They run very quickly because they do not start the Spring Context.
+    - Dependencies are mocked using `Mockito`.
+    - The focus is on the logical correctness of a specific piece of code.
+
+### 2. Integration Tests
+
+- **Purpose:** To test whether different components of the application (e.g., Controller → Service → Repository) work correctly together. These tests ensure that the application behaves consistently as a whole.
+- **Tools:** `@SpringBootTest`, `TestRestTemplate`/`MockMvc`, `Testcontainers` or `H2 In-Memory Database`.
+- **Characteristics:**
+    - They provide a more realistic test environment by starting the Spring Application Context.
+    - They test integration points such as database operations, API endpoints, and inter-service communication.
+    - They run slower than unit tests.
+
+#### Component Tests
+
+As a subtype of integration tests, annotations like `@WebMvcTest` (for the Web layer only) or `@DataJpaTest` (for the JPA layer only) are also used to test only a specific layer (slice). This provides a faster feedback loop than full integration tests.
+
+### 3. End-to-End Tests
+
+- **Purpose:** To verify that the entire system works as expected by simulating a real user scenario from start to finish. These tests validate the application in a state that is closest to the live environment.
+- **Tools:** `RestAssured` or `TestRestTemplate` for API tests; tools like `Selenium` or `Cypress` can be used for UI tests.
+- **Characteristics:**
+    - They are executed on a running instance of the application.
+    - They are the slowest and most costly type of test.
+    - They ensure that critical user flows (e.g., registration, placing an order) work smoothly.
+
+### Running Tests
+
+You can use the following command to run all tests in the project:
+
+```shell
+mvn clean test
+```
+
+To compile the project while skipping tests:
+```shell
+mvn clean install -DskipTests
+```
 
 ---
 
