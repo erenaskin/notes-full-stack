@@ -3,8 +3,8 @@
 FROM openjdk:17-jdk-slim
 
 # 2. Adım: Projemizin derlenmiş halini (JAR dosyası) argüman olarak tanımlıyoruz.
-# Maven, derleme sonrası JAR dosyasını 'target' klasörüne koyar.
-ARG JAR_FILE=target/*.jar
+# Maven, derleme sonrası JAR dosyasını projenin ana dizinine göre 'api/target' klasörüne koyar.
+ARG JAR_FILE=api/target/*.jar
 
 # 3. Adım: Derlenmiş JAR dosyasını bilgisayarımızdan konteynerin içine kopyalıyoruz.
 # Ve adını 'app.jar' olarak değiştiriyoruz ki her zaman sabit bir isme sahip olsun.
