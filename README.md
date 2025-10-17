@@ -85,8 +85,8 @@ services:
     image: postgres:18
     container_name: notes-postgres
     environment:
-      POSTGRES_USER: erenaskin
-      POSTGRES_PASSWORD: Ea030903*
+      POSTGRES_USER: your_postgres_user
+      POSTGRES_PASSWORD: your_postgres_password
       POSTGRES_DB: notes_db
     ports:
       - "5432:5432"
@@ -104,8 +104,8 @@ services:
       - "8080:8080"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres_db:5432/notes_db
-      - SPRING_DATASOURCE_USERNAME=erenaskin
-      - SPRING_DATASOURCE_PASSWORD=Ea030903*
+      - SPRING_DATASOURCE_USERNAME=your_spring_datasource_username
+      - SPRING_DATASOURCE_PASSWORD=your_spring_datasource_password
 
 volumes:
   postgres_data:
