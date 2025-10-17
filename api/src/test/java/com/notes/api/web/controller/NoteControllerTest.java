@@ -18,6 +18,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -58,7 +60,7 @@ class NoteControllerTest {
 
     @Test
     void getNotes_shouldReturnNotesForUser() throws Exception {
-        Note note = Note.builder().title("Test Note").content("Content").user(testUser).build();
+        Note note = Note.builder().title("Test Note").content("Content").user(testUser).isDeleted(false).build();
         noteRepository.save(note);
 
         mockMvc.perform(get("/api/notes"))
@@ -69,7 +71,7 @@ class NoteControllerTest {
 
     @Test
     void getNoteById_shouldReturnNote() throws Exception {
-        Note note = Note.builder().title("Test Note").content("Content").user(testUser).build();
+        Note note = Note.builder().title("Test Note").content("Content").user(testUser).isDeleted(false).build();
         note = noteRepository.save(note);
 
         mockMvc.perform(get("/api/notes/{id}", note.getId()))
@@ -96,7 +98,7 @@ class NoteControllerTest {
 
     @Test
     void updateNote_shouldUpdateAndReturnNote() throws Exception {
-        Note note = Note.builder().title("Old Note").content("Old Content").user(testUser).build();
+        Note note = Note.builder().title("Old Note").content("Old Content").user(testUser).isDeleted(false).build();
         note = noteRepository.save(note);
         CreateNoteRequest request = new CreateNoteRequest("Updated Note", "Updated Content");
 
@@ -109,13 +111,20 @@ class NoteControllerTest {
 
     @Test
     void deleteNote_shouldDeleteNote() throws Exception {
-        Note note = Note.builder().title("Test Note").content("Content").user(testUser).build();
+        Note note = Note.builder().title("Test Note").content("Content").user(testUser).isDeleted(false).build();
         note = noteRepository.save(note);
 
         mockMvc.perform(delete("/api/notes/{id}", note.getId()))
                 .andExpect(status().isNoContent());
 
+        // Soft delete: not artık silinmiş olarak işaretlenmeli
         mockMvc.perform(get("/api/notes/{id}", note.getId()))
                 .andExpect(status().isNotFound());
+        
+        // Veritabanında hala mevcut olmalı ama isDeleted=true olmalı
+        Note deletedNote = noteRepository.findById(note.getId()).orElseThrow();
+        assertTrue(deletedNote.getIsDeleted());
+        assertNotNull(deletedNote.getDeletedAt());
     }
 }
+

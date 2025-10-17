@@ -29,7 +29,7 @@ public class NoteServiceImpl implements NoteService {
     @Override
     public List<NoteDto> findAllForUser(UserDetails userDetails) {
         User user = getUserByDetails(userDetails);
-        return noteRepository.findByUserOrderByUpdatedAtDesc(user).stream()
+        return noteRepository.findByUserAndNotDeleted(user).stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
@@ -37,7 +37,7 @@ public class NoteServiceImpl implements NoteService {
     @Override
     public NoteDto findByIdForUser(Long id, UserDetails userDetails) {
         User user = getUserByDetails(userDetails);
-        Note note = noteRepository.findById(id)
+        Note note = noteRepository.findByIdAndNotDeleted(id)
                 .orElseThrow(() -> new RuntimeException("Note not found with id: " + id));
         if (!note.getUser().getId().equals(user.getId())) {
             throw new SecurityException("You are not allowed to access this note");
@@ -59,7 +59,7 @@ public class NoteServiceImpl implements NoteService {
     @Override
     public NoteDto update(Long id, CreateNoteRequest request, UserDetails userDetails) {
         User user = getUserByDetails(userDetails);
-        Note note = noteRepository.findById(id)
+        Note note = noteRepository.findByIdAndNotDeleted(id)
                 .orElseThrow(() -> new RuntimeException("Note not found with id: " + id));
         if (!note.getUser().getId().equals(user.getId())) {
             throw new SecurityException("You are not allowed to update this note");
@@ -72,12 +72,15 @@ public class NoteServiceImpl implements NoteService {
     @Override
     public void delete(Long id, UserDetails userDetails) {
         User user = getUserByDetails(userDetails);
-        Note note = noteRepository.findById(id)
+        Note note = noteRepository.findByIdAndNotDeleted(id)
                 .orElseThrow(() -> new RuntimeException("Note not found with id: " + id));
         if (!note.getUser().getId().equals(user.getId())) {
             throw new SecurityException("You are not allowed to delete this note");
         }
-        noteRepository.delete(note);
+        // Soft delete: fiziksel olarak silme, sadece işaretle
+        note.setIsDeleted(true);
+        note.setDeletedAt(java.time.LocalDateTime.now());
+        noteRepository.save(note);
     }
 
     private NoteDto convertToDto(Note note) {

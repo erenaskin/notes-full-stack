@@ -67,7 +67,9 @@ public class NoteE2ETest {
                 .getForEntity(getNoteUrl() + "/" + createdNote.getId(), NoteDto.class);
         assertEquals(HttpStatus.OK, getResponse.getStatusCode());
         Assertions.assertNotNull(getResponse.getBody());
-        assertEquals("E2E Test Note", getResponse.getBody().getTitle());
+        NoteDto retrievedNote = getResponse.getBody();
+        Assertions.assertNotNull(retrievedNote);
+        assertEquals("E2E Test Note", retrievedNote.getTitle());
 
         // Update Note
         CreateNoteRequest updateRequest = new CreateNoteRequest("Updated E2E Note", "Updated E2E Content");
@@ -79,7 +81,9 @@ public class NoteE2ETest {
                 .getForEntity(getNoteUrl() + "/" + createdNote.getId(), NoteDto.class);
         assertEquals(HttpStatus.OK, getUpdatedResponse.getStatusCode());
         Assertions.assertNotNull(getUpdatedResponse.getBody());
-        assertEquals("Updated E2E Note", getUpdatedResponse.getBody().getTitle());
+        NoteDto updatedNote = getUpdatedResponse.getBody();
+        Assertions.assertNotNull(updatedNote);
+        assertEquals("Updated E2E Note", updatedNote.getTitle());
 
         // Delete Note
         restTemplate.withBasicAuth("testuser", "password").delete(getNoteUrl() + "/" + createdNote.getId());

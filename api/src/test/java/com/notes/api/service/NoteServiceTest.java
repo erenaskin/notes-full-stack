@@ -54,47 +54,47 @@ class NoteServiceTest {
 
     @Test
     void findAllForUser_shouldReturnNoteDtoList() {
-        Note note = Note.builder().id(1L).title("Test Note").content("Test Content").user(user).build();
+        Note note = Note.builder().id(1L).title("Test Note").content("Test Content").user(user).isDeleted(false).build();
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
-        when(noteRepository.findByUserOrderByUpdatedAtDesc(user)).thenReturn(Collections.singletonList(note));
+        when(noteRepository.findByUserAndNotDeleted(user)).thenReturn(Collections.singletonList(note));
 
         List<NoteDto> result = noteService.findAllForUser(userDetails);
 
         assertEquals(1, result.size());
         assertEquals("Test Note", result.get(0).getTitle());
         verify(userRepository).findByUsername("testuser");
-        verify(noteRepository).findByUserOrderByUpdatedAtDesc(user);
+        verify(noteRepository).findByUserAndNotDeleted(user);
     }
 
     @Test
     void findAllForUser_shouldReturnEmptyList_whenNoNotes() {
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
-        when(noteRepository.findByUserOrderByUpdatedAtDesc(user)).thenReturn(Collections.emptyList());
+        when(noteRepository.findByUserAndNotDeleted(user)).thenReturn(Collections.emptyList());
 
         List<NoteDto> result = noteService.findAllForUser(userDetails);
 
         assertTrue(result.isEmpty());
         verify(userRepository).findByUsername("testuser");
-        verify(noteRepository).findByUserOrderByUpdatedAtDesc(user);
+        verify(noteRepository).findByUserAndNotDeleted(user);
     }
 
     @Test
     void findByIdForUser_shouldReturnNoteDto() {
-        Note note = Note.builder().id(1L).title("Test Note").content("Test Content").user(user).build();
+        Note note = Note.builder().id(1L).title("Test Note").content("Test Content").user(user).isDeleted(false).build();
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
-        when(noteRepository.findById(1L)).thenReturn(Optional.of(note));
+        when(noteRepository.findByIdAndNotDeleted(1L)).thenReturn(Optional.of(note));
 
         NoteDto result = noteService.findByIdForUser(1L, userDetails);
 
         assertEquals("Test Note", result.getTitle());
         verify(userRepository).findByUsername("testuser");
-        verify(noteRepository).findById(1L);
+        verify(noteRepository).findByIdAndNotDeleted(1L);
     }
 
     @Test
     void findByIdForUser_shouldThrowException_whenNoteNotFound() {
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
-        when(noteRepository.findById(1L)).thenReturn(Optional.empty());
+        when(noteRepository.findByIdAndNotDeleted(1L)).thenReturn(Optional.empty());
 
         assertThrows(RuntimeException.class, () -> noteService.findByIdForUser(1L, userDetails));
     }
@@ -103,9 +103,9 @@ class NoteServiceTest {
     void findByIdForUser_shouldThrowSecurityException_whenUserNotAllowed() {
         User anotherUser = new User();
         anotherUser.setId(2L);
-        Note note = Note.builder().id(1L).title("Test Note").content("Test Content").user(anotherUser).build();
+        Note note = Note.builder().id(1L).title("Test Note").content("Test Content").user(anotherUser).isDeleted(false).build();
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
-        when(noteRepository.findById(1L)).thenReturn(Optional.of(note));
+        when(noteRepository.findByIdAndNotDeleted(1L)).thenReturn(Optional.of(note));
 
         assertThrows(SecurityException.class, () -> noteService.findByIdForUser(1L, userDetails));
     }
@@ -113,7 +113,7 @@ class NoteServiceTest {
     @Test
     void create_shouldReturnCreatedNoteDto() {
         CreateNoteRequest request = new CreateNoteRequest("New Note", "New Content");
-        Note note = Note.builder().id(1L).title("New Note").content("New Content").user(user).build();
+        Note note = Note.builder().id(1L).title("New Note").content("New Content").user(user).isDeleted(false).build();
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
         when(noteRepository.save(any(Note.class))).thenReturn(note);
 
@@ -127,9 +127,9 @@ class NoteServiceTest {
     @Test
     void update_shouldReturnUpdatedNoteDto() {
         CreateNoteRequest request = new CreateNoteRequest("Updated Note", "Updated Content");
-        Note existingNote = Note.builder().id(1L).title("Old Note").content("Old Content").user(user).build();
+        Note existingNote = Note.builder().id(1L).title("Old Note").content("Old Content").user(user).isDeleted(false).build();
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
-        when(noteRepository.findById(1L)).thenReturn(Optional.of(existingNote));
+        when(noteRepository.findByIdAndNotDeleted(1L)).thenReturn(Optional.of(existingNote));
         when(noteRepository.save(any(Note.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         NoteDto result = noteService.update(1L, request, userDetails);
@@ -137,7 +137,7 @@ class NoteServiceTest {
         assertEquals("Updated Note", result.getTitle());
         assertEquals("Updated Content", result.getContent());
         verify(userRepository).findByUsername("testuser");
-        verify(noteRepository).findById(1L);
+        verify(noteRepository).findByIdAndNotDeleted(1L);
         verify(noteRepository).save(any(Note.class));
     }
 
@@ -145,7 +145,7 @@ class NoteServiceTest {
     void update_shouldThrowException_whenNoteNotFound() {
         CreateNoteRequest request = new CreateNoteRequest("Updated Note", "Updated Content");
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
-        when(noteRepository.findById(1L)).thenReturn(Optional.empty());
+        when(noteRepository.findByIdAndNotDeleted(1L)).thenReturn(Optional.empty());
 
         assertThrows(RuntimeException.class, () -> noteService.update(1L, request, userDetails));
     }
@@ -155,30 +155,33 @@ class NoteServiceTest {
         CreateNoteRequest request = new CreateNoteRequest("Updated Note", "Updated Content");
         User anotherUser = new User();
         anotherUser.setId(2L);
-        Note existingNote = Note.builder().id(1L).title("Old Note").content("Old Content").user(anotherUser).build();
+        Note existingNote = Note.builder().id(1L).title("Old Note").content("Old Content").user(anotherUser).isDeleted(false).build();
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
-        when(noteRepository.findById(1L)).thenReturn(Optional.of(existingNote));
+        when(noteRepository.findByIdAndNotDeleted(1L)).thenReturn(Optional.of(existingNote));
 
         assertThrows(SecurityException.class, () -> noteService.update(1L, request, userDetails));
     }
 
     @Test
     void delete_shouldDeleteNote() {
-        Note note = Note.builder().id(1L).title("Test Note").content("Test Content").user(user).build();
+        Note note = Note.builder().id(1L).title("Test Note").content("Test Content").user(user).isDeleted(false).build();
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
-        when(noteRepository.findById(1L)).thenReturn(Optional.of(note));
-        doNothing().when(noteRepository).delete(note);
+        when(noteRepository.findByIdAndNotDeleted(1L)).thenReturn(Optional.of(note));
+        when(noteRepository.save(any(Note.class))).thenReturn(note);
 
         noteService.delete(1L, userDetails);
 
         verify(userRepository).findByUsername("testuser");
-        verify(noteRepository).delete(note);
+        verify(noteRepository).save(any(Note.class));
+        // Soft delete yapıldığını kontrol et
+        assertTrue(note.getIsDeleted());
+        assertNotNull(note.getDeletedAt());
     }
 
     @Test
     void delete_shouldThrowException_whenNoteNotFound() {
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
-        when(noteRepository.findById(1L)).thenReturn(Optional.empty());
+        when(noteRepository.findByIdAndNotDeleted(1L)).thenReturn(Optional.empty());
 
         assertThrows(RuntimeException.class, () -> noteService.delete(1L, userDetails));
     }
@@ -187,9 +190,9 @@ class NoteServiceTest {
     void delete_shouldThrowSecurityException_whenUserNotAllowed() {
         User anotherUser = new User();
         anotherUser.setId(2L);
-        Note note = Note.builder().id(1L).title("Test Note").content("Test Content").user(anotherUser).build();
+        Note note = Note.builder().id(1L).title("Test Note").content("Test Content").user(anotherUser).isDeleted(false).build();
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
-        when(noteRepository.findById(1L)).thenReturn(Optional.of(note));
+        when(noteRepository.findByIdAndNotDeleted(1L)).thenReturn(Optional.of(note));
 
         assertThrows(SecurityException.class, () -> noteService.delete(1L, userDetails));
     }
