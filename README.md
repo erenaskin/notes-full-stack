@@ -103,7 +103,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres_db:5432/notes_db
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres_db:5432/your_db_name
       - SPRING_DATASOURCE_USERNAME=your_datasource_username
       - SPRING_DATASOURCE_PASSWORD=your_datasource_password
 
